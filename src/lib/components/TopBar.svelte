@@ -1,12 +1,10 @@
 <script lang="ts">
 	import { page } from '$app/state';
 	import LayoutGrid from '@lucide/svelte/icons/layout-grid';
-	import Monitor from '@lucide/svelte/icons/monitor';
 	import Search from '@lucide/svelte/icons/search';
 
 	const navItems = [
-		{ href: '/', label: 'Inicio', icon: LayoutGrid },
-		{ href: '/equipos', label: 'Equipos', icon: Monitor }
+		{ href: '/', label: 'Inicio', icon: LayoutGrid }
 	];
 </script>
 
