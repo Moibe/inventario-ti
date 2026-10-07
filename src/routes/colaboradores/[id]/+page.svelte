@@ -213,24 +213,6 @@
 			</section>
 
 			<section class="rounded-lg border border-border bg-card p-6">
-				<h2 class="text-sm font-semibold">Equipo principal (CPU)</h2>
-				<div class="mt-4 grid grid-cols-3 gap-3">
-					<label class="flex flex-col gap-1.5">
-						<span class={etiqueta}>Marca</span>
-						<input class={input} bind:value={cpu.marca} />
-					</label>
-					<label class="flex flex-col gap-1.5">
-						<span class={etiqueta}>Modelo</span>
-						<input class={input} bind:value={cpu.modelo} />
-					</label>
-					<label class="flex flex-col gap-1.5">
-						<span class={etiqueta}>No. Serie</span>
-						<input class={input} bind:value={cpu.serie} />
-					</label>
-				</div>
-			</section>
-
-			<section class="rounded-lg border border-border bg-card p-6">
 				<h2 class="text-sm font-semibold">Responsiva</h2>
 				<p class="mt-1 text-xs text-muted-foreground">Documento firmado y escaneado (PDF, JPG o PNG, hasta 15 MB).</p>
 				<div class="mt-4 flex flex-wrap items-center gap-3">
@@ -277,64 +259,84 @@
 			</section>
 		</div>
 
-		<section class="flex flex-col rounded-lg border border-border bg-card p-6">
-			<div class="flex items-center justify-between">
-				<h2 class="text-sm font-semibold">Periféricos</h2>
-				<div class="flex gap-2">
-					<button type="button" class={botonSec} onclick={agregar}>
-						<Plus class="size-4" /> Agregar
-					</button>
-					<button
-						type="button"
-						class={botonSec}
-						onclick={eliminar}
-						disabled={seleccionado === null}
-					>
-						<Trash2 class="size-4" /> Quitar
-					</button>
+		<div class="flex flex-col gap-6">
+			<section class="rounded-lg border border-border bg-card p-6">
+				<h2 class="text-sm font-semibold">Equipo principal (CPU)</h2>
+				<div class="mt-4 grid grid-cols-3 gap-3">
+					<label class="flex flex-col gap-1.5">
+						<span class={etiqueta}>Marca</span>
+						<input class={input} bind:value={cpu.marca} />
+					</label>
+					<label class="flex flex-col gap-1.5">
+						<span class={etiqueta}>Modelo</span>
+						<input class={input} bind:value={cpu.modelo} />
+					</label>
+					<label class="flex flex-col gap-1.5">
+						<span class={etiqueta}>No. Serie</span>
+						<input class={input} bind:value={cpu.serie} />
+					</label>
 				</div>
-			</div>
+			</section>
 
-			<div class="mt-4 overflow-hidden rounded-lg border border-border">
-				<table class="w-full text-sm">
-					<thead class="bg-muted/60 text-left text-xs text-muted-foreground">
-						<tr>
-							<th class="px-3 py-2 font-medium">Tipo</th>
-							<th class="px-3 py-2 font-medium">Marca</th>
-							<th class="px-3 py-2 font-medium">Modelo</th>
-							<th class="px-3 py-2 font-medium">No. Serie</th>
-						</tr>
-					</thead>
-					<tbody>
-						{#each perifericos as p (p.id)}
-							<tr
-								class={[
-									'border-t border-border transition-colors',
-									seleccionado === p.id ? 'bg-primary/5' : 'hover:bg-muted/40'
-								]}
-								onfocusin={() => (seleccionado = p.id)}
-								onclick={() => (seleccionado = p.id)}
-							>
-								{#each ['tipo', 'marca', 'modelo', 'serie'] as const as campo (campo)}
-									<td class="p-1">
-										<input
-											class="h-8 w-full rounded-md bg-transparent px-2 outline-none focus:bg-white focus:ring-2 focus:ring-ring/40"
-											bind:value={p[campo]}
-										/>
-									</td>
-								{/each}
-							</tr>
-						{:else}
+			<section class="flex flex-col rounded-lg border border-border bg-card p-6">
+				<div class="flex items-center justify-between">
+					<h2 class="text-sm font-semibold">Periféricos</h2>
+					<div class="flex gap-2">
+						<button type="button" class={botonSec} onclick={agregar}>
+							<Plus class="size-4" /> Agregar
+						</button>
+						<button
+							type="button"
+							class={botonSec}
+							onclick={eliminar}
+							disabled={seleccionado === null}
+						>
+							<Trash2 class="size-4" /> Quitar
+						</button>
+					</div>
+				</div>
+	
+				<div class="mt-4 overflow-hidden rounded-lg border border-border">
+					<table class="w-full text-sm">
+						<thead class="bg-muted/60 text-left text-xs text-muted-foreground">
 							<tr>
-								<td colspan="4" class="px-3 py-10 text-center text-xs text-muted-foreground">
-									Sin periféricos. Usa “Agregar” para registrar monitor, teclado, mouse…
-								</td>
+								<th class="px-3 py-2 font-medium">Tipo</th>
+								<th class="px-3 py-2 font-medium">Marca</th>
+								<th class="px-3 py-2 font-medium">Modelo</th>
+								<th class="px-3 py-2 font-medium">No. Serie</th>
 							</tr>
-						{/each}
-					</tbody>
-				</table>
+						</thead>
+						<tbody>
+							{#each perifericos as p (p.id)}
+								<tr
+									class={[
+										'border-t border-border transition-colors',
+										seleccionado === p.id ? 'bg-primary/5' : 'hover:bg-muted/40'
+									]}
+									onfocusin={() => (seleccionado = p.id)}
+									onclick={() => (seleccionado = p.id)}
+								>
+									{#each ['tipo', 'marca', 'modelo', 'serie'] as const as campo (campo)}
+										<td class="p-1">
+											<input
+												class="h-8 w-full rounded-md bg-transparent px-2 outline-none focus:bg-white focus:ring-2 focus:ring-ring/40"
+												bind:value={p[campo]}
+											/>
+										</td>
+									{/each}
+								</tr>
+							{:else}
+								<tr>
+									<td colspan="4" class="px-3 py-10 text-center text-xs text-muted-foreground">
+										Sin periféricos. Usa “Agregar” para registrar monitor, teclado, mouse…
+									</td>
+								</tr>
+							{/each}
+						</tbody>
+					</table>
+				</div>
+			</section>
 			</div>
-		</section>
 	</div>
 </form>
 
