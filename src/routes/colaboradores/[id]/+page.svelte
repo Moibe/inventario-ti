@@ -190,7 +190,7 @@
 						</label>
 						<label class="flex flex-col gap-1.5">
 							<span class={etiqueta}>Usuario</span>
-							<input class={input} bind:value={persona.usuario} placeholder="p. ej. jperez" />
+							<input class={input} bind:value={persona.usuario} />
 						</label>
 						<label class="flex flex-col gap-1.5">
 							<span class={etiqueta}>No. de empleado</span>
