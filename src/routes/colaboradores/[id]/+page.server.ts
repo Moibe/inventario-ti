@@ -1,7 +1,7 @@
 import { error, fail, redirect } from '@sveltejs/kit';
 import { eq } from 'drizzle-orm';
-import { db } from '#lib/server/db/index.js';
-import { colaboradores, equipos } from '#lib/server/db/schema.js';
+import { db } from '$lib/server/db';
+import { colaboradores, equipos } from '$lib/server/db/schema';
 import type { Actions, PageServerLoad } from './$types';
 
 type Equipo = { tipo: string; marca: string; modelo: string; serie: string };

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '../app.css';
-	import favicon from '#lib/assets/favicon.svg';
-	import TopBar from '#lib/components/TopBar.svelte';
+	import favicon from '$lib/assets/favicon.svg';
+	import TopBar from '$lib/components/TopBar.svelte';
 	import type { LayoutProps } from './$types';
 
 	let { children }: LayoutProps = $props();

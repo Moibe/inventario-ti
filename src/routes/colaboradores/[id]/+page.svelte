@@ -6,8 +6,8 @@
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
-	import { exportarExcel } from '#lib/exportar.js';
-	import Confirmar from '#lib/components/Confirmar.svelte';
+	import { exportarExcel } from '$lib/exportar';
+	import Confirmar from '$lib/components/Confirmar.svelte';
 	import type { PageProps } from './$types';
 
 	type Periferico = { id: number; tipo: string; marca: string; modelo: string; serie: string };

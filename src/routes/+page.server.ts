@@ -1,6 +1,6 @@
 import { asc } from 'drizzle-orm';
-import { db } from '#lib/server/db/index.js';
-import { colaboradores } from '#lib/server/db/schema.js';
+import { db } from '$lib/server/db';
+import { colaboradores } from '$lib/server/db/schema';
 import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {

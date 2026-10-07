@@ -3,7 +3,7 @@
 	import Download from '@lucide/svelte/icons/download';
 	import Search from '@lucide/svelte/icons/search';
 	import { goto } from '$app/navigation';
-	import { exportarExcel } from '#lib/exportar.js';
+	import { exportarExcel } from '$lib/exportar';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
