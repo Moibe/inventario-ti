@@ -4,6 +4,9 @@
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import Download from '@lucide/svelte/icons/download';
 	import ArrowLeft from '@lucide/svelte/icons/arrow-left';
+	import FileText from '@lucide/svelte/icons/file-text';
+	import Upload from '@lucide/svelte/icons/upload';
+	import X from '@lucide/svelte/icons/x';
 	import { untrack } from 'svelte';
 	import { enhance } from '$app/forms';
 	import { exportarExcel } from '$lib/exportar';
@@ -19,6 +22,9 @@
 	const cpuInicial = inicial?.equipos.find((e) => e.principal);
 	let persona = $state({
 		nombre: inicial?.nombre ?? '',
+		apellido: inicial?.apellido ?? '',
+		usuario: inicial?.usuario ?? '',
+		numeroEmpleado: inicial?.numeroEmpleado ?? '',
 		area: inicial?.area ?? '',
 		departamento: inicial?.departamento ?? '',
 		puesto: inicial?.puesto ?? ''
@@ -38,7 +44,21 @@
 	let guardando = $state(false);
 	let confirmarBorrado = $state(false);
 
-	const datos = $derived(JSON.stringify({ persona, foto, cpu, perifericos }));
+	// La responsiva viaja como archivo en el mismo formulario (multipart).
+	let inputResponsiva = $state<HTMLInputElement>();
+	let archivoNuevo = $state('');
+	let quitarResponsiva = $state(false);
+
+	function quitar() {
+		if (inputResponsiva) inputResponsiva.value = '';
+		if (archivoNuevo) archivoNuevo = '';
+		else quitarResponsiva = true;
+	}
+
+	const nombreCompleto = $derived(
+		inicial ? `${inicial.nombre} ${inicial.apellido}`.trim() : 'Nuevo colaborador'
+	);
+	const datos = $derived(JSON.stringify({ persona, foto, cpu, perifericos, quitarResponsiva }));
 
 	// La foto se reduce a 400px antes de guardarla para que la base no crezca de más.
 	function elegirFoto(e: Event) {
@@ -73,6 +93,8 @@
 			[
 				{
 					...persona,
+					responsivaArchivo:
+						archivoNuevo || (!quitarResponsiva && inicial?.responsivaArchivo) || null,
 					equipos: [
 						{ principal: true, tipo: 'CPU', ...cpu },
 						...perifericos.map((p) => ({ ...p, principal: false }))
@@ -93,12 +115,13 @@
 </script>
 
 <svelte:head>
-	<title>{inicial ? inicial.nombre : 'Nuevo colaborador'} · Inventario TI</title>
+	<title>{nombreCompleto} · Inventario TI</title>
 </svelte:head>
 
 <form
 	method="POST"
 	action="?/guardar"
+	enctype="multipart/form-data"
 	use:enhance={() => {
 		guardando = true;
 		return async ({ update }) => {
@@ -117,7 +140,7 @@
 			>
 				<ArrowLeft class="size-3.5" /> Inventario
 			</a>
-			<h1 class="text-xl font-semibold">{inicial ? inicial.nombre : 'Nuevo colaborador'}</h1>
+			<h1 class="text-xl font-semibold">{nombreCompleto}</h1>
 		</div>
 		<div class="flex items-center gap-3">
 			{#if form?.mensaje}<span class="text-xs text-destructive">{form.mensaje}</span>{/if}
@@ -157,9 +180,21 @@
 						<input type="file" accept="image/*" class="hidden" onchange={elegirFoto} />
 					</label>
 					<div class="grid flex-1 grid-cols-2 gap-3">
-						<label class="col-span-2 flex flex-col gap-1.5">
+						<label class="flex flex-col gap-1.5">
 							<span class={etiqueta}>Nombre</span>
 							<input class={input} bind:value={persona.nombre} required />
+						</label>
+						<label class="flex flex-col gap-1.5">
+							<span class={etiqueta}>Apellido</span>
+							<input class={input} bind:value={persona.apellido} />
+						</label>
+						<label class="flex flex-col gap-1.5">
+							<span class={etiqueta}>Usuario</span>
+							<input class={input} bind:value={persona.usuario} placeholder="p. ej. jperez" />
+						</label>
+						<label class="flex flex-col gap-1.5">
+							<span class={etiqueta}>No. de empleado</span>
+							<input class={input} bind:value={persona.numeroEmpleado} />
 						</label>
 						<label class="flex flex-col gap-1.5">
 							<span class={etiqueta}>Área</span>
@@ -192,6 +227,52 @@
 						<span class={etiqueta}>No. Serie</span>
 						<input class={input} bind:value={cpu.serie} />
 					</label>
+				</div>
+			</section>
+
+			<section class="rounded-lg border border-border bg-card p-6">
+				<h2 class="text-sm font-semibold">Responsiva</h2>
+				<p class="mt-1 text-xs text-muted-foreground">Documento firmado y escaneado (PDF, JPG o PNG, hasta 15 MB).</p>
+				<div class="mt-4 flex flex-wrap items-center gap-3">
+					<div class="flex min-w-0 flex-1 items-center gap-2 text-sm">
+						<FileText class="size-4 shrink-0 text-muted-foreground" />
+						{#if archivoNuevo}
+							<span class="truncate">{archivoNuevo}</span>
+							<span class="shrink-0 text-xs text-muted-foreground">· se sube al guardar</span>
+						{:else if inicial?.responsivaArchivo && !quitarResponsiva}
+							<a
+								href="/colaboradores/{inicial.id}/responsiva"
+								target="_blank"
+								class="truncate text-primary hover:underline"
+							>
+								{inicial.responsivaNombre ?? 'Ver responsiva'}
+							</a>
+						{:else}
+							<span class="text-muted-foreground">
+								{quitarResponsiva ? 'Se quitará al guardar' : 'Sin responsiva'}
+							</span>
+						{/if}
+					</div>
+					<label class="{botonSec} cursor-pointer">
+						<Upload class="size-4" />
+						{inicial?.responsivaArchivo || archivoNuevo ? 'Reemplazar' : 'Subir'}
+						<input
+							bind:this={inputResponsiva}
+							type="file"
+							name="responsiva"
+							accept=".pdf,.jpg,.jpeg,.png"
+							class="hidden"
+							onchange={(e) => {
+								archivoNuevo = e.currentTarget.files?.[0]?.name ?? '';
+								quitarResponsiva = false;
+							}}
+						/>
+					</label>
+					{#if archivoNuevo || (inicial?.responsivaArchivo && !quitarResponsiva)}
+						<button type="button" class={botonSec} onclick={quitar}>
+							<X class="size-4" /> Quitar
+						</button>
+					{/if}
 				</div>
 			</section>
 		</div>
@@ -258,7 +339,7 @@
 </form>
 
 <Confirmar bind:abierto={confirmarBorrado} titulo="Eliminar colaborador">
-	Se borrará a <span class="font-medium text-foreground">{inicial?.nombre}</span> junto con todos sus
+	Se borrará a <span class="font-medium text-foreground">{nombreCompleto}</span> junto con todos sus
 	equipos. Esta acción no se puede deshacer.
 	{#snippet acciones()}
 		<button type="button" class={botonSec} onclick={() => (confirmarBorrado = false)}>

@@ -4,11 +4,19 @@ import { relations, sql } from 'drizzle-orm';
 export const colaboradores = sqliteTable('colaboradores', {
 	id: integer('id').primaryKey({ autoIncrement: true }),
 	nombre: text('nombre').notNull(),
+	apellido: text('apellido').notNull().default(''),
+	// Usuario de red / dominio del colaborador.
+	usuario: text('usuario').notNull().default(''),
+	numeroEmpleado: text('numero_empleado').notNull().default(''),
 	area: text('area').notNull().default(''),
 	departamento: text('departamento').notNull().default(''),
 	puesto: text('puesto').notNull().default(''),
 	// Data URL de la foto, ya reducida en el navegador (~30 KB).
 	foto: text('foto'),
+	// Responsiva escaneada: el archivo vive en disco (ver $lib/server/responsivas);
+	// aquí solo el nombre con el que se guardó y el nombre original que subió James.
+	responsivaArchivo: text('responsiva_archivo'),
+	responsivaNombre: text('responsiva_nombre'),
 	creadoEn: integer('creado_en', { mode: 'timestamp' })
 		.notNull()
 		.default(sql`(unixepoch())`)

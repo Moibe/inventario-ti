@@ -1,18 +1,46 @@
 type Equipo = { principal: boolean; tipo: string; marca: string; modelo: string; serie: string };
 type Colaborador = {
 	nombre: string;
+	apellido: string;
+	usuario: string;
+	numeroEmpleado: string;
 	area: string;
 	departamento: string;
 	puesto: string;
+	responsivaArchivo?: string | null;
 	equipos: Equipo[];
 };
 
 /** Descarga un CSV (con BOM para que Excel respete los acentos), una fila por equipo. */
 export function exportarExcel(colaboradores: Colaborador[], archivo: string) {
 	const celda = (v: string) => `"${v.replaceAll('"', '""')}"`;
-	const filas = [['Nombre', 'Área', 'Departamento', 'Puesto', 'Tipo', 'Marca', 'Modelo', 'No. Serie']];
+	const filas = [
+		[
+			'Nombre',
+			'Apellido',
+			'Usuario',
+			'No. Empleado',
+			'Área',
+			'Departamento',
+			'Puesto',
+			'Responsiva',
+			'Tipo',
+			'Marca',
+			'Modelo',
+			'No. Serie'
+		]
+	];
 	for (const c of colaboradores) {
-		const base = [c.nombre, c.area, c.departamento, c.puesto];
+		const base = [
+			c.nombre,
+			c.apellido,
+			c.usuario,
+			c.numeroEmpleado,
+			c.area,
+			c.departamento,
+			c.puesto,
+			c.responsivaArchivo ? 'Sí' : 'No'
+		];
 		// El CPU primero, luego los periféricos.
 		const equipos = [...c.equipos].sort((a, b) => Number(b.principal) - Number(a.principal));
 		if (equipos.length === 0) filas.push([...base, '', '', '', '']);
