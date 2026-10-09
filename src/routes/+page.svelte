@@ -5,30 +5,38 @@
 	import FileText from '@lucide/svelte/icons/file-text';
 	import { goto } from '$app/navigation';
 	import { exportarExcel } from '$lib/exportar';
+	import { nombreCompleto, sinAcentos } from '$lib/nombre';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	let busqueda = $state('');
 
+	// Texto buscable de cada fila, ya sin acentos (se recalcula solo al cambiar los datos).
+	const buscables = $derived(
+		data.colaboradores.map((c) => ({
+			c,
+			texto: sinAcentos(
+				[
+					nombreCompleto(c),
+					c.usuario,
+					c.numeroEmpleado,
+					c.telefonoMovil,
+					c.telefonoFijo,
+					c.numeroResponsiva,
+					c.responsivaNombre ?? '',
+					c.area,
+					c.departamento,
+					c.puesto,
+					...c.equipos.map((e) => e.serie)
+				].join(' ')
+			)
+		}))
+	);
+
 	const filtrados = $derived.by(() => {
-		const q = busqueda.trim().toLowerCase();
+		const q = sinAcentos(busqueda);
 		if (!q) return data.colaboradores;
-		return data.colaboradores.filter((c) =>
-			[
-				c.nombre,
-				c.apellido,
-				c.usuario,
-				c.numeroEmpleado,
-				c.responsivaNombre ?? '',
-				c.area,
-				c.departamento,
-				c.puesto,
-				...c.equipos.map((e) => e.serie)
-			]
-				.join(' ')
-				.toLowerCase()
-				.includes(q)
-		);
+		return buscables.filter((x) => x.texto.includes(q)).map((x) => x.c);
 	});
 
 	const botonSec =
@@ -63,11 +71,11 @@
 
 <div class="mt-8 rounded-lg border border-border bg-card">
 	<div class="border-b border-border p-4">
-		<label class="relative block max-w-lg">
+		<label class="relative block max-w-xl">
 			<Search class="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
 			<input
 				bind:value={busqueda}
-				placeholder="Buscar por nombre, apellido, usuario, no. de empleado, responsiva o serie…"
+				placeholder="Buscar por nombre, no. de empleado, teléfono, responsiva o serie…"
 				class="h-9 w-full rounded-lg border border-border bg-white pr-3 pl-9 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-ring/40"
 			/>
 		</label>
@@ -81,7 +89,7 @@
 				<th class="px-4 py-3 font-medium">Área</th>
 				<th class="px-4 py-3 font-medium">Departamento</th>
 				<th class="px-4 py-3 font-medium">Puesto</th>
-				<th class="px-4 py-3 font-medium">CPU</th>
+				<th class="px-4 py-3 font-medium">Equipo</th>
 				<th class="px-4 py-3 font-medium">Responsiva</th>
 				<th class="px-4 py-3 text-right font-medium">Periféricos</th>
 			</tr>
@@ -94,7 +102,7 @@
 					onclick={() => goto(`/colaboradores/${c.id}`)}
 				>
 					<td class="px-4 py-3 font-medium">
-						<a href="/colaboradores/{c.id}">{c.nombre} {c.apellido}</a>
+						<a href="/colaboradores/{c.id}">{nombreCompleto(c)}</a>
 						{#if c.usuario}<p class="text-xs font-normal text-muted-foreground">{c.usuario}</p>{/if}
 					</td>
 					<td class="px-4 py-3 text-muted-foreground">{c.numeroEmpleado || '—'}</td>
@@ -103,21 +111,25 @@
 					<td class="px-4 py-3 text-muted-foreground">{c.puesto}</td>
 					<td class="px-4 py-3 text-muted-foreground">
 						{#if cpu && (cpu.marca || cpu.serie)}
-							{cpu.marca} <span class="text-xs">· {cpu.serie}</span>
+							<span class="text-xs">{cpu.tipo}</span> {cpu.marca}
+							<span class="text-xs">· {cpu.serie}</span>
 						{:else}—{/if}
 					</td>
 					<td class="px-4 py-3">
-						{#if c.responsivaArchivo}
-							<a
-								href="/colaboradores/{c.id}/responsiva"
-								target="_blank"
-								title={c.responsivaNombre ?? 'Ver responsiva'}
-								class="inline-flex items-center gap-1 text-xs text-primary hover:underline"
-								onclick={(e) => e.stopPropagation()}
-							>
-								<FileText class="size-4" /> Ver
-							</a>
-						{:else}<span class="text-xs text-muted-foreground">Pendiente</span>{/if}
+						<div class="flex items-center gap-2 text-xs">
+							{#if c.numeroResponsiva}<span>{c.numeroResponsiva}</span>{/if}
+							{#if c.responsivaArchivo}
+								<a
+									href="/colaboradores/{c.id}/responsiva"
+									target="_blank"
+									title={c.responsivaNombre ?? 'Ver responsiva'}
+									class="inline-flex items-center gap-1 text-primary hover:underline"
+									onclick={(e) => e.stopPropagation()}
+								>
+									<FileText class="size-4" /> Ver
+								</a>
+							{:else}<span class="text-muted-foreground">Pendiente</span>{/if}
+						</div>
 					</td>
 					<td class="px-4 py-3 text-right text-muted-foreground">
 						{c.equipos.filter((e) => !e.principal).length}

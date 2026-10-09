@@ -5,7 +5,7 @@ import type { PageServerLoad } from './$types';
 
 export const load: PageServerLoad = async () => {
 	const lista = await db.query.colaboradores.findMany({
-		columns: { foto: false },
+		columns: { foto: false, fotoEquipo: false },
 		with: { equipos: true },
 		orderBy: asc(colaboradores.nombre)
 	});
