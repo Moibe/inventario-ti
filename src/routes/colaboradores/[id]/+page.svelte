@@ -292,6 +292,11 @@
 					<Trash2 class="size-4" /> Eliminar
 				</button>
 			{/if}
+			<!-- Todavía sin función: el usuario pidió dejar el botón puesto y
+			     decidir después qué debe hacer la importación. -->
+			<button type="button" class={botonSec} disabled title="Disponible próximamente">
+				<Upload class="size-4" /> Importar Excel
+			</button>
 			<button type="button" class={botonSec} onclick={exportar}>
 				<Download class="size-4" /> Exportar a Excel
 			</button>
