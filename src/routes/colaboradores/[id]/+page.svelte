@@ -14,6 +14,7 @@
 	import { reducirImagen } from '$lib/imagen';
 	import { nombreCompleto } from '$lib/nombre';
 	import Confirmar from '$lib/components/Confirmar.svelte';
+	import { botonPrimario, botonSec, cajaFoto, celda, etiqueta, input } from '$lib/ui';
 	import type { PageProps } from './$types';
 
 	// Tipos de periférico de uso diario; cualquier otro se captura con "Otro…".
@@ -91,6 +92,7 @@
 	let guardando = $state(false);
 	let confirmarBorrado = $state(false);
 	let errorLocal = $state('');
+	let avisoLocal = $state('');
 
 	// La responsiva viaja como archivo en el mismo formulario (multipart).
 	let inputResponsiva = $state<HTMLInputElement>();
@@ -108,8 +110,8 @@
 	const EXTENSIONES = ['.pdf', '.jpg', '.jpeg', '.png'];
 
 	function elegirResponsiva(e: Event & { currentTarget: HTMLInputElement }) {
-		const input = e.currentTarget;
-		const archivo = input.files?.[0];
+		const campo = e.currentTarget;
+		const archivo = campo.files?.[0];
 		if (!archivo) {
 			archivoNuevo = '';
 			return;
@@ -125,13 +127,37 @@
 					: '';
 		if (problema) {
 			errorLocal = problema;
-			input.value = '';
+			campo.value = '';
 			archivoNuevo = '';
 			return;
 		}
 		errorLocal = '';
 		archivoNuevo = archivo.name;
 		quitarResponsiva = false;
+	}
+
+	// Mandar un Excel a TI: se sube aparte del formulario y no toca esta ficha.
+	let inputEnvio = $state<HTMLInputElement>();
+	let enviando = $state(false);
+
+	async function enviarExcel(e: Event & { currentTarget: HTMLInputElement }) {
+		const archivo = e.currentTarget.files?.[0];
+		if (!archivo) return;
+		enviando = true;
+		errorLocal = '';
+		avisoLocal = '';
+		try {
+			const cuerpo = new FormData();
+			cuerpo.append('archivo', archivo);
+			const r = await fetch('/envios/subir', { method: 'POST', body: cuerpo });
+			const datos = await r.json().catch(() => ({}));
+			if (r.ok) avisoLocal = `Se envió “${archivo.name}” a TI.`;
+			else errorLocal = datos.mensaje ?? 'No se pudo enviar el archivo.';
+		} catch {
+			errorLocal = 'No se pudo enviar el archivo; revisa la conexión.';
+		}
+		enviando = false;
+		if (inputEnvio) inputEnvio.value = '';
 	}
 
 	function quitar() {
@@ -147,8 +173,8 @@
 
 	// Las fotos se reducen en el navegador antes de guardarlas para que la base no crezca de más.
 	async function elegirImagen(e: Event, maxLado: number, asignar: (v: string) => void) {
-		const input = e.currentTarget as HTMLInputElement;
-		const archivo = input.files?.[0];
+		const campo = e.currentTarget as HTMLInputElement;
+		const archivo = campo.files?.[0];
 		if (!archivo) return;
 		try {
 			asignar(await reducirImagen(archivo, maxLado));
@@ -156,7 +182,7 @@
 		} catch {
 			errorLocal = 'No se pudo leer la imagen';
 		}
-		input.value = '';
+		campo.value = '';
 	}
 
 	function agregar() {
@@ -229,17 +255,6 @@
 		document.body.appendChild(marco);
 	}
 
-	const input =
-		'h-9 w-full rounded-lg border border-border bg-white px-3 text-sm outline-none transition-colors focus:border-primary focus:ring-2 focus:ring-ring/40';
-	const celda =
-		'h-8 w-full rounded-md bg-transparent px-2 text-sm outline-none focus:bg-white focus:ring-2 focus:ring-ring/40';
-	const etiqueta = 'text-xs font-medium text-muted-foreground';
-	const cajaFoto =
-		'relative flex shrink-0 cursor-pointer items-center justify-center overflow-hidden rounded-lg border border-dashed border-border bg-muted/50 transition-colors hover:bg-muted has-focus-visible:ring-2 has-focus-visible:ring-ring/40';
-	const botonSec =
-		'relative flex h-9 items-center gap-2 rounded-lg border border-border bg-white px-3 text-xs font-medium transition-colors hover:bg-muted has-focus-visible:ring-2 has-focus-visible:ring-ring/40 disabled:opacity-50 disabled:hover:bg-white';
-	const botonPrimario =
-		'h-9 rounded-lg bg-primary px-4 text-xs font-medium text-primary-foreground transition-opacity hover:opacity-90 disabled:opacity-60';
 </script>
 
 <svelte:head>
@@ -280,7 +295,8 @@
 			</a>
 			<h1 class="text-xl font-semibold">{titulo}</h1>
 		</div>
-		<div class="flex items-center gap-3">
+		<div class="flex flex-wrap items-center justify-end gap-3">
+			{#if avisoLocal}<span class="text-xs text-primary">{avisoLocal}</span>{/if}
 			{#if errorLocal}<span class="text-xs text-destructive">{errorLocal}</span>{/if}
 			{#if form?.mensaje}<span class="text-xs text-destructive">{form.mensaje}</span>{/if}
 			{#if inicial}
@@ -292,11 +308,21 @@
 					<Trash2 class="size-4" /> Eliminar
 				</button>
 			{/if}
-			<!-- Todavía sin función: el usuario pidió dejar el botón puesto y
-			     decidir después qué debe hacer la importación. -->
-			<button type="button" class={botonSec} disabled title="Disponible próximamente">
-				<Upload class="size-4" /> Importar Excel
-			</button>
+			<!-- El archivo solo se guarda en el servidor para que TI lo revise; todavía
+			     no se convierte en colaboradores. Va por fetch y no como parte de este
+			     formulario, porque el HTML no permite un formulario dentro de otro. -->
+			<label class="{botonSec} cursor-pointer" title="Mandar un Excel a TI para que lo revise">
+				<Upload class="size-4" />
+				{enviando ? 'Enviando…' : 'Enviar Excel a TI'}
+				<input
+					bind:this={inputEnvio}
+					type="file"
+					accept=".xlsx,.xlsm,.xls,.csv"
+					class="sr-only"
+					disabled={enviando}
+					onchange={enviarExcel}
+				/>
+			</label>
 			<button type="button" class={botonSec} onclick={exportar}>
 				<Download class="size-4" /> Exportar a Excel
 			</button>

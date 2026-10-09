@@ -46,6 +46,59 @@ export const equipos = sqliteTable('equipos', {
 	serie: text('serie').notNull().default('')
 });
 
+// ── Cuentas ─────────────────────────────────────────────────────────────────
+// Mismo patrón que shape_up: scrypt para la contraseña, la sesión vive como el
+// SHA-256 de su token, y una cuenta nueva no tiene contraseña hasta que la
+// persona la activa con su invitación.
+export const usuarios = sqliteTable('usuarios', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	usuario: text('usuario').notNull().unique(),
+	// scrypt guardado como "salHex:hashHex". NULL mientras no activa su cuenta.
+	contrasenaHash: text('contrasena_hash'),
+	// El superadmin administra cuentas y descarga los Excel que envían los demás.
+	esAdmin: integer('es_admin', { mode: 'boolean' }).notNull().default(false),
+	creadoEn: integer('creado_en', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(unixepoch())`)
+});
+
+export const sesiones = sqliteTable('sesiones', {
+	// SHA-256 del token; el token crudo solo existe en la cookie.
+	id: text('id').primaryKey(),
+	usuarioId: integer('usuario_id')
+		.notNull()
+		.references(() => usuarios.id, { onDelete: 'cascade' }),
+	expiraEn: integer('expira_en').notNull() // unix ms
+});
+
+// Liga de un solo uso para que la persona ponga su propia contraseña.
+export const invitaciones = sqliteTable('invitaciones', {
+	id: text('id').primaryKey(),
+	usuarioId: integer('usuario_id')
+		.notNull()
+		.references(() => usuarios.id, { onDelete: 'cascade' }),
+	expiraEn: integer('expira_en').notNull()
+});
+
+// ── Excel que manda el capturista a TI ──────────────────────────────────────
+// Por ahora el archivo solo se guarda y lo descarga el superadmin; nadie lo lee
+// ni lo convierte en colaboradores todavía.
+export const envios = sqliteTable('envios', {
+	id: integer('id').primaryKey({ autoIncrement: true }),
+	// Nombre en disco (uuid + extensión) y el nombre original de quien lo mandó.
+	archivo: text('archivo').notNull(),
+	nombre: text('nombre').notNull(),
+	bytes: integer('bytes').notNull(),
+	enviadoPor: integer('enviado_por').references(() => usuarios.id, { onDelete: 'set null' }),
+	creadoEn: integer('creado_en', { mode: 'timestamp' })
+		.notNull()
+		.default(sql`(unixepoch())`)
+});
+
+export const enviosRelations = relations(envios, ({ one }) => ({
+	usuario: one(usuarios, { fields: [envios.enviadoPor], references: [usuarios.id] })
+}));
+
 export const colaboradoresRelations = relations(colaboradores, ({ many }) => ({
 	equipos: many(equipos)
 }));

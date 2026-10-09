@@ -15,7 +15,11 @@ const codificarNombre = (nombre: string) =>
 
 // Abre la responsiva escaneada en el navegador (inline: PDF o imagen); con
 // `?descargar` la manda como archivo para guardar.
-export const GET: RequestHandler = async ({ params, url }) => {
+export const GET: RequestHandler = async ({ params, url, locals }) => {
+	// El guard de +layout.server.ts solo protege páginas: un endpoint tiene que
+	// revisar la sesión por su cuenta o quedaría abierto a toda la red.
+	if (!locals.usuario) error(401, 'Necesitas iniciar sesión.');
+
 	const id = Number(params.id);
 	if (!Number.isInteger(id)) error(404, 'No encontrada');
 

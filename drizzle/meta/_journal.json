@@ -22,6 +22,13 @@
       "when": 1791583767900,
       "tag": "0002_youthful_nebula",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "6",
+      "when": 1791589400691,
+      "tag": "0003_fluffy_joseph",
+      "breakpoints": true
     }
   ]
 }

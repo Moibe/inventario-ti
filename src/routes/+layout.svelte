@@ -4,7 +4,7 @@
 	import TopBar from '$lib/components/TopBar.svelte';
 	import type { LayoutProps } from './$types';
 
-	let { children }: LayoutProps = $props();
+	let { data, children }: LayoutProps = $props();
 </script>
 
 <svelte:head>
@@ -13,7 +13,9 @@
 </svelte:head>
 
 <div class="flex min-h-screen flex-col bg-background">
-	<TopBar />
+	{#if data.usuario}
+		<TopBar usuario={data.usuario} />
+	{/if}
 
 	<main class="mx-auto w-full max-w-7xl flex-1 px-6 py-8">
 		{@render children()}

@@ -6,6 +6,7 @@
 	import { goto } from '$app/navigation';
 	import { exportarExcel } from '$lib/exportar';
 	import { nombreCompleto, sinAcentos } from '$lib/nombre';
+	import { botonSec } from '$lib/ui';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
@@ -39,8 +40,6 @@
 		return buscables.filter((x) => x.texto.includes(q)).map((x) => x.c);
 	});
 
-	const botonSec =
-		'flex h-9 items-center gap-2 rounded-lg border border-border bg-white px-3 text-xs font-medium transition-colors hover:bg-muted';
 </script>
 
 <div class="flex flex-wrap items-end justify-between gap-4">
