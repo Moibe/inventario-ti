@@ -24,5 +24,8 @@ vite.config.ts.timestamp-*
 local.db
 local.db-shm
 local.db-wal
+# Archivos subidos por los usuarios. La barra inicial es importante: sin ella
+# "envios/" también ignoraría src/routes/envios y esa pantalla no llegaría al
+# servidor (pasó el 2026-10-09: el deploy decía success y la ruta daba 404).
 /responsivas/
 /envios/
