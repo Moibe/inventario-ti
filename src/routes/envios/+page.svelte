@@ -4,14 +4,13 @@
 	import Trash2 from '@lucide/svelte/icons/trash-2';
 	import { enhance } from '$app/forms';
 	import Confirmar from '$lib/components/Confirmar.svelte';
+	import { enMb } from '$lib/limites';
 	import { botonSec } from '$lib/ui';
 	import type { PageProps } from './$types';
 
 	let { data }: PageProps = $props();
 	let porBorrar = $state<{ id: number; nombre: string } | null>(null);
 
-	const peso = (b: number) =>
-		b < 1024 * 1024 ? `${Math.max(1, Math.round(b / 1024))} KB` : `${(b / 1024 / 1024).toFixed(1)} MB`;
 
 	const cuando = (d: Date | string) =>
 		new Date(d).toLocaleString('es-MX', {
@@ -55,7 +54,7 @@
 					</td>
 					<td class="px-4 py-3 text-muted-foreground">{e.de}</td>
 					<td class="px-4 py-3 text-muted-foreground">{cuando(e.creadoEn)}</td>
-					<td class="px-4 py-3 text-right text-muted-foreground">{peso(e.bytes)}</td>
+					<td class="px-4 py-3 text-right text-muted-foreground">{enMb(e.bytes)}</td>
 					<td class="px-4 py-3">
 						<div class="flex justify-end gap-2">
 							<a href="/envios/{e.id}" download class={botonSec}>

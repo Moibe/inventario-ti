@@ -1,7 +1,7 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { extname, join } from 'node:path';
-import { enMb, MAX_RESPONSIVA } from '$lib/limites';
+import { enMb, MAX_RESPONSIVA, topeEnMb } from '$lib/limites';
 
 // Las responsivas escaneadas pesan demasiado para la base: van a disco, junto a
 // local.db, en una carpeta ignorada por git (sobrevive a los pulls del deploy).
@@ -30,7 +30,7 @@ export function extensionResponsiva(nombre: string) {
 export function revisarResponsiva(archivo: File) {
 	if (!extensionResponsiva(archivo.name)) return 'La responsiva debe ser PDF, JPG o PNG';
 	if (archivo.size > MAX_BYTES)
-		return `La responsiva pesa ${enMb(archivo.size)} y el máximo son ${enMb(MAX_BYTES).replace(',0', '')}`;
+		return `La responsiva pesa ${enMb(archivo.size)} y el máximo son ${topeEnMb(MAX_BYTES)}`;
 	return null;
 }
 

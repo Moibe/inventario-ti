@@ -19,7 +19,8 @@
 		EXTENSIONES_RESPONSIVA,
 		MAX_ENVIO,
 		MAX_RESPONSIVA,
-		revisarArchivo
+		revisarArchivo,
+		topeEnMb
 	} from '$lib/limites';
 	import { nombreCompleto } from '$lib/nombre';
 	import Confirmar from '$lib/components/Confirmar.svelte';
@@ -128,7 +129,7 @@
 			: archivo.size === 0
 				? 'El archivo está vacío'
 				: archivo.size > MAX_RESPONSIVA
-					? `La responsiva pesa ${enMb(archivo.size)} y el máximo son ${enMb(MAX_RESPONSIVA).replace(',0', '')}`
+					? `La responsiva pesa ${enMb(archivo.size)} y el máximo son ${topeEnMb(MAX_RESPONSIVA)}`
 					: '';
 		if (problema) {
 			errorLocal = problema;
@@ -169,13 +170,20 @@
 		errorLocal = '';
 		avisoLocal = '';
 		try {
-			const cuerpo = new FormData();
-			cuerpo.append('archivo', archivo);
-			const r = await fetch('/envios/subir', { method: 'POST', body: cuerpo });
+			// Se manda el archivo tal cual, con el nombre en la dirección: así el
+			// servidor lo puede escribir a disco por partes. Si fuera un FormData,
+			// tendría que juntarlo entero en memoria antes de tocarlo.
+			const r = await fetch('/envios/subir?nombre=' + encodeURIComponent(archivo.name), {
+				method: 'POST',
+				headers: { 'content-type': 'application/octet-stream' },
+				body: archivo
+			});
 			const datos = await r.json().catch(() => ({}));
 			if (r.ok) avisoLocal = `Se envió “${archivo.name}” a TI.`;
 			else if (r.status === 413)
-				errorLocal = `El servidor rechazó “${archivo.name}” por su tamaño (${enMb(archivo.size)}). Avisa a TI.`;
+				errorLocal =
+					datos.mensaje ??
+					`El servidor rechazó “${archivo.name}” por su tamaño (${enMb(archivo.size)}). Avisa a TI.`;
 			else errorLocal = datos.mensaje ?? `No se pudo enviar el archivo (error ${r.status}).`;
 		} catch {
 			errorLocal = 'No se pudo enviar el archivo; revisa la conexión.';
