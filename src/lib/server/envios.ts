@@ -18,6 +18,22 @@ export const TIPOS_ENVIO: Record<string, string> = {
 	'.xls': 'application/vnd.ms-excel',
 	'.csv': 'text/csv'
 };
+/**
+ * Lo que adapter-node acepta por petición, leído del mismo BODY_SIZE_LIMIT que
+ * él usa. Sirve para avisar con nombre y apellido cuando el tope del servidor se
+ * quedó por debajo del de la app: si no, corta la petición a medias y el usuario
+ * solo ve "no se pudo guardar". Regresa null si no hay tope.
+ */
+export function topeDelServidor(): number | null {
+	const valor = (process.env.BODY_SIZE_LIMIT ?? '').trim();
+	if (!valor) return 512 * 1024; // el default de adapter-node
+	if (valor === '0' || valor.toLowerCase() === 'infinity') return null;
+	const m = /^(\d+)([kmg]?)$/i.exec(valor);
+	if (!m) return null;
+	const multiplicador = { '': 1, k: 1024, m: 1024 ** 2, g: 1024 ** 3 }[m[2].toLowerCase()] ?? 1;
+	return Number(m[1]) * multiplicador;
+}
+
 /** Extensión reconocida, o null. Única fuente de verdad para validar y guardar. */
 export function extensionEnvio(nombre: string) {
 	const ext = extname(nombre).toLowerCase();

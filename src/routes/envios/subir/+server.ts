@@ -1,7 +1,8 @@
 import { error, json } from '@sveltejs/kit';
+import { dev } from '$app/environment';
 import { db } from '$lib/server/db';
 import { envios } from '$lib/server/db/schema';
-import { borrarEnvio, guardarEnvioEnPartes } from '$lib/server/envios';
+import { borrarEnvio, guardarEnvioEnPartes, topeDelServidor } from '$lib/server/envios';
 import { enMb, EXTENSIONES_ENVIO, extensionDe, MAX_ENVIO, topeEnMb } from '$lib/limites';
 import type { RequestHandler } from './$types';
 
@@ -34,6 +35,17 @@ export const POST: RequestHandler = async ({ request, url, locals }) => {
 	if (declarado > MAX_ENVIO)
 		return json(
 			{ mensaje: `El archivo pesa ${enMb(declarado)} y el máximo son ${topeEnMb(MAX_ENVIO)}.` },
+			{ status: 413 }
+		);
+	// Si el tope del servidor se quedó por debajo del de la app, adapter-node corta
+	// la petición a media escritura y el error ya no explica nada. Mejor decirlo aquí.
+	// En desarrollo no hay adapter-node y por tanto no hay tope que avisar.
+	const tope = dev ? null : topeDelServidor();
+	if (tope !== null && declarado > tope)
+		return json(
+			{
+				mensaje: `El servidor solo acepta ${topeEnMb(tope)} por envío y este archivo pesa ${enMb(declarado)}. Hay que subir BODY_SIZE_LIMIT en su configuración: avisa a TI.`
+			},
 			{ status: 413 }
 		);
 	if (!request.body) return json({ mensaje: 'No llegó ningún archivo.' }, { status: 400 });
