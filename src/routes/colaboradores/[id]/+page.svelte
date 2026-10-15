@@ -109,6 +109,12 @@
 	const MAX_RESPONSIVA = 15 * 1024 * 1024;
 	const EXTENSIONES = ['.pdf', '.jpg', '.jpeg', '.png'];
 
+	const extensionDe = (nombre: string) => {
+		const punto = nombre.lastIndexOf('.');
+		return punto > 0 ? nombre.slice(punto).toLowerCase() : '';
+	};
+	const enMb = (bytes: number) => (bytes / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB';
+
 	function elegirResponsiva(e: Event & { currentTarget: HTMLInputElement }) {
 		const campo = e.currentTarget;
 		const archivo = campo.files?.[0];
@@ -116,14 +122,12 @@
 			archivoNuevo = '';
 			return;
 		}
-		const punto = archivo.name.lastIndexOf('.');
-		const ext = punto > 0 ? archivo.name.slice(punto).toLowerCase() : '';
-		const problema = !EXTENSIONES.includes(ext)
+		const problema = !EXTENSIONES.includes(extensionDe(archivo.name))
 			? 'La responsiva debe ser PDF, JPG o PNG'
 			: archivo.size === 0
 				? 'El archivo está vacío'
 				: archivo.size > MAX_RESPONSIVA
-					? 'La responsiva pesa más de 15 MB'
+					? `La responsiva pesa ${enMb(archivo.size)} y el máximo son 15 MB`
 					: '';
 		if (problema) {
 			errorLocal = problema;
@@ -137,12 +141,33 @@
 	}
 
 	// Mandar un Excel a TI: se sube aparte del formulario y no toca esta ficha.
-	let inputEnvio = $state<HTMLInputElement>();
+	const MAX_ENVIO = 15 * 1024 * 1024;
+	const EXTENSIONES_ENVIO = ['.xlsx', '.xlsm', '.xls', '.csv'];
 	let enviando = $state(false);
 
 	async function enviarExcel(e: Event & { currentTarget: HTMLInputElement }) {
-		const archivo = e.currentTarget.files?.[0];
+		const campo = e.currentTarget;
+		const archivo = campo.files?.[0];
 		if (!archivo) return;
+
+		// Se revisa aquí y no solo en el servidor: pasado el tope del servidor la
+		// petición se corta antes de llegar a la app, y entonces la respuesta ya no
+		// trae mensaje y el usuario se queda sin saber qué estuvo mal.
+		const ext = extensionDe(archivo.name);
+		const problema = !EXTENSIONES_ENVIO.includes(ext)
+			? `No se puede enviar un archivo ${ext || 'sin extensión'}: debe ser Excel (.xlsx, .xlsm, .xls) o .csv`
+			: archivo.size === 0
+				? 'El archivo está vacío'
+				: archivo.size > MAX_ENVIO
+					? `“${archivo.name}” pesa ${enMb(archivo.size)} y el máximo son 15 MB. Avisa a TI si necesitas mandar uno más grande.`
+					: '';
+		if (problema) {
+			avisoLocal = '';
+			errorLocal = problema;
+			campo.value = '';
+			return;
+		}
+
 		enviando = true;
 		errorLocal = '';
 		avisoLocal = '';
@@ -152,12 +177,14 @@
 			const r = await fetch('/envios/subir', { method: 'POST', body: cuerpo });
 			const datos = await r.json().catch(() => ({}));
 			if (r.ok) avisoLocal = `Se envió “${archivo.name}” a TI.`;
-			else errorLocal = datos.mensaje ?? 'No se pudo enviar el archivo.';
+			else if (r.status === 413)
+				errorLocal = `El servidor rechazó “${archivo.name}” por su tamaño (${enMb(archivo.size)}). Avisa a TI.`;
+			else errorLocal = datos.mensaje ?? `No se pudo enviar el archivo (error ${r.status}).`;
 		} catch {
 			errorLocal = 'No se pudo enviar el archivo; revisa la conexión.';
 		}
 		enviando = false;
-		if (inputEnvio) inputEnvio.value = '';
+		campo.value = '';
 	}
 
 	function quitar() {
@@ -315,7 +342,6 @@
 				<Upload class="size-4" />
 				{enviando ? 'Enviando…' : 'Enviar Excel a TI'}
 				<input
-					bind:this={inputEnvio}
 					type="file"
 					accept=".xlsx,.xlsm,.xls,.csv"
 					class="sr-only"
