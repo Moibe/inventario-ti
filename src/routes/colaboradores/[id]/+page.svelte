@@ -12,6 +12,15 @@
 	import { enhance } from '$app/forms';
 	import { exportarExcel } from '$lib/exportar';
 	import { reducirImagen } from '$lib/imagen';
+	import {
+		enMb,
+		extensionDe,
+		EXTENSIONES_ENVIO,
+		EXTENSIONES_RESPONSIVA,
+		MAX_ENVIO,
+		MAX_RESPONSIVA,
+		revisarArchivo
+	} from '$lib/limites';
 	import { nombreCompleto } from '$lib/nombre';
 	import Confirmar from '$lib/components/Confirmar.svelte';
 	import { botonPrimario, botonSec, cajaFoto, celda, etiqueta, input } from '$lib/ui';
@@ -106,14 +115,6 @@
 	// Se revisa aquí, antes de enviar: un escaneo demasiado grande lo cortaría el
 	// servidor con un 413 seco, y la misma regla de extensión que usa el servidor
 	// evita que algo pase la pantalla de aquí y truene allá.
-	const MAX_RESPONSIVA = 15 * 1024 * 1024;
-	const EXTENSIONES = ['.pdf', '.jpg', '.jpeg', '.png'];
-
-	const extensionDe = (nombre: string) => {
-		const punto = nombre.lastIndexOf('.');
-		return punto > 0 ? nombre.slice(punto).toLowerCase() : '';
-	};
-	const enMb = (bytes: number) => (bytes / 1024 / 1024).toFixed(1).replace('.', ',') + ' MB';
 
 	function elegirResponsiva(e: Event & { currentTarget: HTMLInputElement }) {
 		const campo = e.currentTarget;
@@ -122,12 +123,12 @@
 			archivoNuevo = '';
 			return;
 		}
-		const problema = !EXTENSIONES.includes(extensionDe(archivo.name))
+		const problema = !EXTENSIONES_RESPONSIVA.includes(extensionDe(archivo.name))
 			? 'La responsiva debe ser PDF, JPG o PNG'
 			: archivo.size === 0
 				? 'El archivo está vacío'
 				: archivo.size > MAX_RESPONSIVA
-					? `La responsiva pesa ${enMb(archivo.size)} y el máximo son 15 MB`
+					? `La responsiva pesa ${enMb(archivo.size)} y el máximo son ${enMb(MAX_RESPONSIVA).replace(',0', '')}`
 					: '';
 		if (problema) {
 			errorLocal = problema;
@@ -141,8 +142,6 @@
 	}
 
 	// Mandar un Excel a TI: se sube aparte del formulario y no toca esta ficha.
-	const MAX_ENVIO = 15 * 1024 * 1024;
-	const EXTENSIONES_ENVIO = ['.xlsx', '.xlsm', '.xls', '.csv'];
 	let enviando = $state(false);
 
 	async function enviarExcel(e: Event & { currentTarget: HTMLInputElement }) {
@@ -153,14 +152,12 @@
 		// Se revisa aquí y no solo en el servidor: pasado el tope del servidor la
 		// petición se corta antes de llegar a la app, y entonces la respuesta ya no
 		// trae mensaje y el usuario se queda sin saber qué estuvo mal.
-		const ext = extensionDe(archivo.name);
-		const problema = !EXTENSIONES_ENVIO.includes(ext)
-			? `No se puede enviar un archivo ${ext || 'sin extensión'}: debe ser Excel (.xlsx, .xlsm, .xls) o .csv`
-			: archivo.size === 0
-				? 'El archivo está vacío'
-				: archivo.size > MAX_ENVIO
-					? `“${archivo.name}” pesa ${enMb(archivo.size)} y el máximo son 15 MB. Avisa a TI si necesitas mandar uno más grande.`
-					: '';
+		const problema = revisarArchivo(
+			archivo,
+			MAX_ENVIO,
+			EXTENSIONES_ENVIO,
+			'Excel (.xlsx, .xlsm, .xls) o .csv'
+		);
 		if (problema) {
 			avisoLocal = '';
 			errorLocal = problema;

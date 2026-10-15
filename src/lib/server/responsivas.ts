@@ -1,6 +1,7 @@
 import { mkdir, readFile, unlink, writeFile } from 'node:fs/promises';
 import { randomUUID } from 'node:crypto';
 import { extname, join } from 'node:path';
+import { enMb, MAX_RESPONSIVA } from '$lib/limites';
 
 // Las responsivas escaneadas pesan demasiado para la base: van a disco, junto a
 // local.db, en una carpeta ignorada por git (sobrevive a los pulls del deploy).
@@ -12,7 +13,8 @@ export const TIPOS: Record<string, string> = {
 	'.jpeg': 'image/jpeg',
 	'.png': 'image/png'
 };
-export const MAX_BYTES = 15 * 1024 * 1024;
+// El tope vive en $lib/limites para que el navegador use exactamente el mismo.
+export const MAX_BYTES = MAX_RESPONSIVA;
 
 /**
  * Extensión reconocida del archivo, o null. Es la única fuente de verdad: si el
@@ -27,7 +29,8 @@ export function extensionResponsiva(nombre: string) {
 /** Revisa tipo y tamaño; regresa el mensaje para el usuario, o null si está bien. */
 export function revisarResponsiva(archivo: File) {
 	if (!extensionResponsiva(archivo.name)) return 'La responsiva debe ser PDF, JPG o PNG';
-	if (archivo.size > MAX_BYTES) return 'La responsiva pesa más de 15 MB';
+	if (archivo.size > MAX_BYTES)
+		return `La responsiva pesa ${enMb(archivo.size)} y el máximo son ${enMb(MAX_BYTES).replace(',0', '')}`;
 	return null;
 }
 
