@@ -4,15 +4,21 @@ import { db } from '$lib/server/db';
 import { envios } from '$lib/server/db/schema';
 import { borrarEnvio, guardarEnvioEnPartes, topeDelServidor } from '$lib/server/envios';
 import { enMb, EXTENSIONES_ENVIO, extensionDe, MAX_ENVIO, topeEnMb } from '$lib/limites';
+import { puedeEnviarExcel } from '$lib/permisos';
 import type { RequestHandler } from './$types';
 
-// Cualquier cuenta con sesión puede mandar un archivo a TI; descargarlo es otra
-// cosa y solo lo hace el superadmin (ver /envios).
+// Quién puede mandar un archivo a TI lo decide `puedeEnviarExcel` (hoy, solo el
+// superadmin); descargarlo es otra cosa y también es solo del superadmin (ver
+// /envios).
 //
 // El archivo llega como cuerpo crudo (no multipart) y con el nombre en la query:
 // así se puede escribir a disco por partes en vez de juntarlo entero en memoria.
 export const POST: RequestHandler = async ({ request, url, locals }) => {
 	if (!locals.usuario) error(401, 'Necesitas iniciar sesión.');
+	// El botón ya no se le muestra a quien no puede, pero eso no es un permiso:
+	// la ruta se cierra aquí también.
+	if (!puedeEnviarExcel(locals.usuario))
+		return json({ mensaje: 'Tu cuenta no puede enviar archivos a TI.' }, { status: 403 });
 
 	// La protección CSRF de SvelteKit solo cubre los content-type de formulario,
 	// y este no lo es, así que el origen se revisa aquí. (La cookie es SameSite

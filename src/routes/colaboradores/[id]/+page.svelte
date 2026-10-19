@@ -23,6 +23,7 @@
 		topeEnMb
 	} from '$lib/limites';
 	import { nombreCompleto } from '$lib/nombre';
+	import { puedeEnviarExcel } from '$lib/permisos';
 	import Confirmar from '$lib/components/Confirmar.svelte';
 	import { botonPrimario, botonSec, cajaFoto, celda, etiqueta, input } from '$lib/ui';
 	import type { PageProps } from './$types';
@@ -343,17 +344,19 @@
 			<!-- El archivo solo se guarda en el servidor para que TI lo revise; todavía
 			     no se convierte en colaboradores. Va por fetch y no como parte de este
 			     formulario, porque el HTML no permite un formulario dentro de otro. -->
-			<label class="{botonSec} cursor-pointer" title="Mandar un Excel a TI para que lo revise">
-				<Upload class="size-4" />
-				{enviando ? 'Enviando…' : 'Enviar Excel a TI'}
-				<input
-					type="file"
-					accept=".xlsx,.xlsm,.xls,.csv"
-					class="sr-only"
-					disabled={enviando}
-					onchange={enviarExcel}
-				/>
-			</label>
+			{#if puedeEnviarExcel(data.usuario)}
+				<label class="{botonSec} cursor-pointer" title="Mandar un Excel a TI para que lo revise">
+					<Upload class="size-4" />
+					{enviando ? 'Enviando…' : 'Enviar Excel a TI'}
+					<input
+						type="file"
+						accept=".xlsx,.xlsm,.xls,.csv"
+						class="sr-only"
+						disabled={enviando}
+						onchange={enviarExcel}
+					/>
+				</label>
+			{/if}
 			<button type="button" class={botonSec} onclick={exportar}>
 				<Download class="size-4" /> Exportar a Excel
 			</button>

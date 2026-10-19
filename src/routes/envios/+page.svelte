@@ -27,8 +27,8 @@
 <div class="flex flex-col gap-1">
 	<h1 class="text-xl font-semibold">Archivos enviados</h1>
 	<p class="text-sm text-muted-foreground">
-		Excels que mandó el capturista desde la ficha. Por ahora solo se guardan; nadie los convierte
-		en colaboradores todavía.
+		Excels enviados desde la ficha. Por ahora solo se guardan; nadie los convierte en
+		colaboradores todavía.
 	</p>
 </div>
 
