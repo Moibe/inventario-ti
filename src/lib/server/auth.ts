@@ -95,8 +95,16 @@ export function ponerCookieSesion(cookies: Cookies, token: string, expiraEn: num
 	});
 }
 
+// El borrado necesita el mismo `secure` que ponerCookieSesion: cookies.delete() también trae
+// Secure por defecto (salvo en localhost), y en http:// el navegador ignora ese Set-Cookie, así
+// que al Salir la cookie vieja se quedaba en el navegador.
 export function borrarCookieSesion(cookies: Cookies) {
-	cookies.delete(COOKIE_SESION, { path: '/' });
+	cookies.delete(COOKIE_SESION, {
+		path: '/',
+		httpOnly: true,
+		sameSite: 'lax',
+		secure: COOKIES_SEGURAS
+	});
 }
 
 // ── Invitaciones (cada quien pone su propia contraseña) ─────────────────────
