@@ -12,8 +12,8 @@ import {
 } from '$lib/server/auth';
 import type { Actions, PageServerLoad } from './$types';
 
-// Liga de un solo uso para activar la cuenta. Es pública: ver la excepción en
-// el +layout.server.ts raíz.
+// Liga de un solo uso para activar la cuenta. Es pública: ver `esPublica` en
+// hooks.server.ts.
 export const load: PageServerLoad = async ({ params, locals }) => {
 	// Si ya hay sesión (p. ej. el admin abrió por error la liga de otra persona)
 	// no seguimos, para no cambiarle la sesión activa por la del invitado.
